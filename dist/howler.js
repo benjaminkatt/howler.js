@@ -579,7 +579,6 @@
       }
 
       // Setup user-defined default properties.
-      self._startTime =  o.startTime || 0;  // Milliseconds since epoch.
       self._autoplay = o.autoplay || false;
       self._format = (typeof o.format !== 'string') ? o.format : [o.format];
       self._html5 = o.html5 || false;
@@ -737,9 +736,15 @@
      * Play a sound or resume previous playback.
      * @param  {String/Number} sprite   Sprite name for sprite playback or sound id to continue previous.
      * @param  {Boolean} internal Internal Use: true prevents event firing.
+     * @param  {Number} startTime Milliseconds since epoch.
      * @return {Number}          Sound ID.
      */
-    play: function(sprite, internal) {
+    play: function(params) {
+      let sprite = params.sprite;
+      let internal = params.internal;
+      if (!Object.hasOwn(this, '_startTime')) {
+        this._startTime = params.startTime || 0;
+      }
       var self = this;
       var id = null;
 
@@ -801,7 +806,7 @@
         self._queue.push({
           event: 'play',
           action: function() {
-            self.play(soundId);
+            self.play({sprite: soundId});
           }
         });
 
@@ -1480,7 +1485,7 @@
               // If playing, restart playback to ensure looping updates.
               if (self.playing(ids[i])) {
                 self.pause(ids[i], true);
-                self.play(ids[i], true);
+                self.play({sprite: ids[i], internal: true});
               }
             }
           }
@@ -1661,7 +1666,7 @@
           var seekAndEmit = function() {
             // Restart the playback if the sound was playing.
             if (playing) {
-              self.play(id, true);
+              self.play({sprite: id, internal: true});
             }
 
             self._emit('seek', id);
@@ -1972,7 +1977,7 @@
 
       // Restart the playback for HTML5 Audio loop.
       if (!self._webAudio && loop) {
-        self.stop(sound._id, true).play(sound._id);
+        self.stop(sound._id, true).play({sprite: sound._id});
       }
 
       // Restart this timer if on a Web Audio loop.
@@ -3246,7 +3251,7 @@
 
     // Update the connections.
     if (!sound._paused) {
-      sound._parent.pause(sound._id, true).play(sound._id, true);
+      sound._parent.pause(sound._id, true).play({sprite: sound._id, internal: true});
     }
   };
 })();
