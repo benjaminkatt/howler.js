@@ -579,6 +579,7 @@
       }
 
       // Setup user-defined default properties.
+      self._startTime =  o.startTime || 0;  // Milliseconds since epoch.
       self._autoplay = o.autoplay || false;
       self._format = (typeof o.format !== 'string') ? o.format : [o.format];
       self._html5 = o.html5 || false;
@@ -864,10 +865,13 @@
           sound._playStart = Howler.ctx.currentTime;
 
           // Play the sound using the supported method.
+          const delayInSeconds = Math.max(0, self._startTime - new Date().getTime()) / 1000.0;
+          console.log('Delay playing: ' + delayInSeconds + ' seconds.');
+
           if (typeof node.bufferSource.start === 'undefined') {
             sound._loop ? node.bufferSource.noteGrainOn(0, seek, 86400) : node.bufferSource.noteGrainOn(0, seek, duration);
           } else {
-            sound._loop ? node.bufferSource.start(0, seek, 86400) : node.bufferSource.start(0, seek, duration);
+            sound._loop ? node.bufferSource.start(delayInSeconds, seek, 86400) : node.bufferSource.start(delayInSeconds, seek, duration);
           }
 
           // Start a new timer if none is present.
@@ -879,7 +883,7 @@
             setTimeout(function() {
               self._emit('play', sound._id);
               self._loadQueue();
-            }, 0);
+            }, delayInSeconds * 1000);
           }
         };
 
